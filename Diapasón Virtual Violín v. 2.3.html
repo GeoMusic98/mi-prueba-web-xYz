@@ -1,0 +1,2194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diapasón Virtual de Violín - Calibración con Plantilla Interactiva</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 20px;
+    }
+
+    #app-container {
+      max-width: 1650px; /* Ampliado para dar más espacio */
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    }
+
+    #controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 20px;
+      justify-content: center;
+    }
+
+    .control-group {
+      background: #f8f9fa;
+      padding: 8px; /* Reducido a 8px para compactar la altura del menú */
+      border-radius: 8px;
+      min-width: 220px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      flex: 1;
+      max-width: 300px;
+      display: flex; /* Añadido para controlar mejor los hijos */
+      flex-direction: column; /* Apilar elementos verticalmente */
+    }
+
+    /* Ajuste para ensanchar el grupo de visualización */
+    .control-group:nth-child(2) { /* Selecciona el segundo control-group, que es Visualización */
+        min-width: 420px; /* Mantener un buen ancho mínimo */
+        max-width: 460px; /* Reducido un poco más para dar más espacio al de acciones */
+    }
+    /* Ajuste para ensanchar el grupo de acciones y colores */
+    .control-group:nth-child(3) { /* Selecciona el tercer control-group, que es Acciones */
+        min-width: 540px; /* Reducido ligeramente el min-width */
+        max-width: 570px; /* Reducido un poco para que encajen los colores */
+    }
+
+
+    @media (max-width: 768px) {
+        .control-group {
+            min-width: 100%;
+            max-width: 100%;
+        }
+        .control-group:nth-child(2),
+        .control-group:nth-child(3) { /* Desactiva el ancho extra en pantallas pequeñas */
+            min-width: 100%;
+            max-width: 100%;
+        }
+    }
+
+    .control-group h3 {
+      margin-top: 0;
+      color: #2c3e50;
+      font-size: 15px; /* Reducido */
+      border-bottom: 1px solid #eee;
+      padding-bottom: 8px;
+      margin-bottom: 10px; /* Espacio después del título */
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      font-size: 13px; /* Reducido */
+    }
+
+    /* Ajuste para el número de trastes - este ya no será necesario visualmente */
+    .fret-number-control {
+        display: none; /* Ocultar el control de número de trastes */
+    }
+
+    select, input:not([type="checkbox"]):not([type="color"]), button {
+      width: 100%;
+      padding: 8px 10px;
+      margin-bottom: 8px; /* Reducido */
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 13px; /* Reducido */
+      box-sizing: border-box;
+    }
+
+    input[type="range"] {
+        padding: 0;
+        margin-top: 5px;
+    }
+
+    button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #2980b9;
+    }
+
+    /* ESTILO PARA EL CONTENEDOR DE LOS COLORES Y EL BOTÓN DE RESTABLECER */
+    #color-controls {
+      display: flex;
+      flex-wrap: wrap; /* Permite que los elementos se envuelvan */
+      gap: 4px; /* Reducido a 4px para compactar */
+      justify-content: center;
+      margin-top: 8px; /* Ajustado para estar más junto al botón */
+      border-top: 1px solid #eee; /* Separador para agrupar visualmente */
+      padding-top: 8px; /* Padding para el contenido dentro de la sección */
+      align-items: flex-end; /* Alinea los elementos al final (útil para el botón) */
+    }
+
+    .color-control {
+      text-align: center;
+      min-width: 75px; /* Reducido para caber más */
+      max-width: 75px; /* Fijo para consistencia */
+    }
+
+    .color-control label {
+      font-weight: normal;
+      margin-bottom: 0px; /* Reducido a 0 para acercar */
+      font-size: 10px; /* Ajuste para etiquetas de color */
+      display: block; /* Asegurar que la etiqueta ocupe su propia línea */
+      line-height: 1.1em; /* Mantiene el espacio entre líneas compacto */
+      overflow: hidden; /* Ocultar desbordamiento si el texto es muy largo */
+      text-overflow: ellipsis; /* Añadir puntos suspensivos si se desborda */
+      padding: 0; /* Asegura que no haya padding */
+    }
+
+    input.color-input {
+      width: 30px; /* Reducido */
+      height: 30px; /* Reducido */
+      padding: 2px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-bottom: 0; /* No margin-bottom aquí */
+    }
+
+    /* Estilo para el botón de restablecer colores */
+    #reset-colors-btn {
+        background-color: #6c757d; /* Color gris */
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-weight: bold;
+        transition: background-color 0.3s;
+        font-size: 11px; /* Más pequeño */
+        padding: 4px 8px; /* Padding reducido */
+        border-radius: 4px;
+        width: auto; /* Ancho automático */
+        margin-left: 0; /* Asegurar que no haya margen izquierdo de botones */
+        margin-top: 8px; /* Espacio superior para separarlo de los colores */
+        align-self: flex-end; /* Alinea el botón al final del contenedor flex */
+    }
+    #reset-colors-btn:hover {
+        background-color: #5a6268;
+    }
+
+    #fretboard-container {
+      position: relative;
+      margin: 0 auto;
+      overflow: hidden; /* Importante para cortar elementos que se salgan */
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      width: 1600px; /* Ajustado para la nueva imagen */
+      height: 820px; /* Ajustado para la nueva imagen */
+    }
+
+    /* Ocultar el canvas por defecto hasta que las imágenes se carguen */
+    #fretboard {
+        display: block;
+        background-color: transparent;
+        position: relative;
+        z-index: 2; /* Mayor que el fondo, menor que las notas y puntos de calibración */
+        pointer-events: none; /* No interfiere con clics en los divs de notas */
+    }
+
+    .open-note {
+      position: absolute;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      z-index: 5; /* Por encima del canvas */
+      background-color: #3498db;
+      cursor: grab;
+      user-select: none;
+      transform: translate(-50%, -50%);
+      pointer-events: none; /* Por defecto, no arrastrable */
+      transition: background-color 0.2s, border 0.2s;
+    }
+    .open-note.draggable {
+        pointer-events: all; /* Habilita el arrastre en modo calibración */
+        border: 2px solid yellow;
+        box-shadow: 0 0 10px rgba(255, 255, 0, 0.7);
+        z-index: 10; /* Aún más alto cuando es arrastrable */
+    }
+    .open-note.draggable.dragging {
+        cursor: grabbing;
+        opacity: 0.7;
+    }
+
+    /* Estilo para los puntos de control del corchete */
+    .bracket-control-point {
+        position: absolute; /* CLAVE para el movimiento */
+        width: 16px;
+        height: 16px;
+        background-color: #FF00FF; /* Magenta para resaltar */
+        border: 2px solid white;
+        border-radius: 50%;
+        cursor: grab;
+        z-index: 9999; /* MUY ALTO para que siempre esté visible y arrastrable */
+        transform: translate(-50%, -50%); /* Centra el div en sus coordenadas x,y */
+        pointer-events: all; /* Habilita el arrastre */
+    }
+    .bracket-control-point.dragging {
+        opacity: 0.7;
+        cursor: grabbing;
+    }
+
+    /* Estilos para el marcador de posición (el "rectángulo" de corchetes) */
+    .position-marker-bracket {
+        position: absolute;
+        pointer-events: none; /* No debe interferir con eventos de mouse */
+        z-index: 4; /* Por debajo de las notas pero por encima del fondo */
+        /* Color fosforescente y brillo */
+        box-shadow: 0 0 15px 5px rgba(46, 204, 113, 0.7); /* Verde fosforescente con brillo */
+        filter: brightness(1.5); /* Aumentar el brillo para el efecto fosforescente */
+    }
+    /* Las líneas individuales del corchete */
+    .bracket-line {
+        position: absolute;
+        background-color: #2ecc71; /* Verde esmeralda */
+        height: 2px; /* Grosor de la línea */
+        z-index: 1; /* Dentro del marcador, se posiciona por debajo de los puntos de control */
+    }
+    /* Estilo para el texto del marcador */
+    .position-marker-text {
+        position: absolute;
+        color: #2ecc71; /* Verde esmeralda */
+        font-weight: bold;
+        font-size: 16px;
+        text-align: center;
+        transform: translate(-50%, -100%); /* Centrar el texto por encima del punto */
+        z-index: 5; /* Por encima de las líneas */
+        pointer-events: none; /* No debe interferir con eventos de mouse */
+        filter: brightness(1.5); /* Mismo brillo que el corchete */
+        text-shadow: 0 0 8px rgba(46, 204, 113, 0.5); /* Sombra para el texto */
+    }
+
+    /* Líneas de calibración para notas (visibles solo en modo calibración de notas) */
+    .calibration-line {
+        position: absolute;
+        background-color: red;
+        opacity: 0.5;
+        z-index: 10; /* Menor que las notas arrastrables, pero visible */
+    }
+    .calibration-line.horizontal {
+        width: 100%;
+        height: 1px;
+        left: 0;
+    }
+    .calibration-line.vertical {
+        width: 1px;
+        height: 100%;
+        top: 0;
+        transform-origin: 0 0;
+    }
+
+    #calibration-output {
+        margin-top: 20px;
+        background-color: #e9ecef;
+        padding: 15px;
+        border-radius: 8px;
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid #ced4da;
+    }
+
+    #bracket-calibration-output { /* Estilo específico para la salida de corchetes */
+        margin-top: 10px;
+        background-color: #e9ecef;
+        padding: 15px;
+        border-radius: 8px;
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid #ced4da;
+    }
+
+
+    #calibration-buttons {
+        text-align: center;
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+
+    #calibration-mode-toggle, #bracket-calibration-mode-toggle {
+        background-color: #ffc107;
+        color: #333;
+        margin-right: 5px; /* Espacio entre los botones */
+    }
+    #calibration-mode-toggle.active, #bracket-calibration-mode-toggle.active {
+        background-color: #28a745;
+        color: white;
+    }
+    #export-coords-btn, #reset-coords-btn {
+        background-color: #6c757d;
+        margin-left: 5px; /* Espacio entre los botones */
+    }
+    #reset-bracket-coords-btn { /* Estilo específico para el botón de restablecer corchetes */
+        background-color: #dc3545; /* Rojo para reset de corchetes */
+        margin-left: 5px;
+    }
+    #export-coords-btn:hover, #reset-coords-btn:hover {
+        background-color: #5a6268;
+    }
+    #reset-bracket-coords-btn:hover {
+        background-color: #c82333;
+    }
+
+
+    details {
+      margin-bottom: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 10px;
+    }
+
+    details > summary {
+      font-weight: bold;
+      cursor: pointer;
+      padding: 8px;
+      background: #007acc;
+      color: white;
+      border-radius: 5px;
+      user-select: none;
+      width: max-content;
+    }
+
+    details[open] > summary {
+      background: #005f99;
+    }
+
+    .checkbox-group, .radio-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0px; /* Reducido a 0 para compactar al máximo */
+      padding: 0px; /* Reducido para compactar al máximo */
+      padding-top: 0; /* Asegurar que no haya padding superior */
+    }
+
+    .checkbox-group label, .radio-group label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: normal;
+      cursor: pointer;
+      font-size: 13px; /* Ajuste para etiquetas de checkbox/radio */
+      margin-bottom: 5px; /* Aumentado para separar cada opción */
+    }
+
+    .checkbox-group input[type="checkbox"], .radio-group input[type="radio"] {
+      width: auto;
+      margin: 0;
+    }
+
+    #calibration-settings-section {
+        margin-top: 20px;
+        padding-top: 15px;
+        border-top: 1px solid #eee;
+        display: block; /* CORREGIDO: Muestra la sección de calibración por defecto */
+    }
+
+    /* Estilos para el nuevo checkbox de plantilla simple */
+    #show-template-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: normal; /* Cambiado a normal para que coincida con otras opciones */
+        font-size: 13px; /* Cambiado a 13px para que coincida con otras opciones */
+        margin-bottom: 0px; /* Ajustado */
+    }
+    #show-template-checkbox {
+        width: auto;
+        margin: 0;
+    }
+
+    #scale-notes-display-container { /* Nuevo contenedor para la etiqueta y las notas */
+        margin-top: 8px; /* Reducido */
+        margin-bottom: 5px; /* Reducido para alineación */
+        padding: 5px; /* Reducido */
+        border-radius: 5px;
+        background-color: #e9e9e9; /* Tono neutral */
+        border: 1px solid #cccccc; /* Borde neutral */
+    }
+
+    #scale-notes-display-label { /* Etiqueta de las notas de la escala */
+        font-size: 0.9em; /* Reducido */
+        font-weight: bold;
+        color: #555; /* Color de texto más neutral */
+        margin-bottom: 3px; /* Espacio entre la etiqueta y las notas */
+        display: block; /* Para que la etiqueta esté en su propia línea */
+    }
+
+    #scale-notes-list { /* Las notas de la escala en sí */
+        font-size: 0.9em; /* Reducido */
+        color: #333; /* Color de texto para las notas */
+        text-align: center; /* Centrar las notas */
+        min-height: 18px; /* Para mantener el espacio */
+        font-weight: normal; /* Asegurar que las notas no sean bold por defecto */
+    }
+
+    /* Controles de visualización agrupados */
+    .visual-options-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr; /* Dos columnas de igual ancho */
+        gap: 10px 15px; /* Espacio vertical y horizontal */
+    }
+
+    .visual-options-grid > div {
+        /* Permite que los divs internos se ajusten al tamaño de la celda */
+        min-width: 0; /* Necesario para que flex-basis funcione correctamente en grid */
+    }
+
+    /* ESTOS SON LOS CAMBIOS CLAVE PARA LA SEPARACIÓN Y UNIÓN */
+    .visual-options-grid h4 {
+        margin-top: 15px; /* Aumentado para separar de lo de arriba */
+        margin-bottom: 5px; /* Añade un pequeño margen inferior */
+        font-size: 14px;
+        color: #2c3e50;
+    }
+
+    .visual-options-grid .radio-group,
+    .visual-options-grid .checkbox-group {
+        margin-top: 0px; /* Pegar al título */
+        padding: 0px; /* Eliminar padding para máxima compacidad */
+    }
+
+    /* Clases para alinear elementos verticalmente */
+    .align-top {
+        align-self: start;
+    }
+
+    /* Estilos para el selector de puntos de calibración (NUEVO: más compacto y horizontal) */
+    #calibration-points-selection {
+        /* max-height: 120px; Eliminado para que se ajuste dinámicamente */
+        overflow-y: auto; /* Mantener si el contenido se desborda */
+        border: 1px solid #ddd;
+        padding: 5px;
+        border-radius: 4px;
+        background-color: #fff;
+        margin-bottom: 10px;
+        display: flex; /* Usar flexbox */
+        flex-wrap: wrap; /* Permitir que los elementos se envuelvan */
+        gap: 8px 10px; /* Espacio entre filas y columnas */
+        justify-content: flex-start; /* Alinear al inicio */
+    }
+    #calibration-points-selection label {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0; /* Eliminar margen inferior */
+        font-weight: normal;
+        font-size: 12px;
+        cursor: pointer;
+        white-space: nowrap; /* Evitar que el texto de la etiqueta se rompa */
+    }
+    #calibration-points-selection input[type="checkbox"] {
+        margin-right: 5px;
+        width: auto; /* Asegurar que el checkbox no ocupe todo el ancho */
+    }
+  </style>
+</head>
+<body>
+  <div id="app-container">
+    <h1>Diapasón Virtual de Violín - Calibración Interactiva</h1>
+
+    <div id="controls">
+      <div class="control-group">
+        <h3>Tonalidad</h3>
+        <label for="root-note-select">Nota raíz:</label>
+        <select id="root-note-select">
+          <option value="C">Do (C)</option>
+          <option value="G">Sol (G)</option>
+          <option value="D">Re (D)</option>
+          <option value="A">La (A)</option>
+          <option value="E">Mi (E)</option>
+          <option value="B">Si (B)</option>
+          <option value="F#">Fa♯ (F♯)</option>
+          <option value="F">Fa (F)</option>
+          <option value="Bb">Si♭ (B♭)</option>
+          <option value="Eb">Mi♭ (E♭)</option>
+          <option value="Ab">La♭ (A♭)</option>
+          <option value="Db">Re♭ (D♭)</option>
+          <option value="Gb">Sol♭ (G♭)</option>
+        </select>
+
+        <label for="scale-select">Tipo de escala:</label>
+        <select id="scale-select">
+          <option value="major">Mayor (Ioniana)</option>
+          <option value="minor">Menor Natural (Eólica)</option>
+          <option value="harmonic_minor">Menor Armónica</option>
+          <option value="melodic_minor">Menor Melódica</option>
+          <option value="dorian">Dórica</option>
+          <option value="mixolydian">Mixolidia</option>
+          <option value="lydian">Lidia</option>
+          <option value="phrygian">Frigia</option>
+          <option value="locrian">Locria</option>
+          <option value="pentatonic_major">Pentatónica Mayor</option>
+          <option value="pentatonic_minor">Pentatónica Menor</option>
+          <option value="blues">Escala Blues</option>
+          <option value="chromatic">Cromática</option>
+        </select>
+        <div id="scale-notes-display-container">
+            <span id="scale-notes-display-label">Notas de la escala:</span>
+            <div id="scale-notes-list"></div> </div>
+      </div>
+
+      <div class="control-group">
+        <h3>Visualización</h3>
+        <div class="fret-number-control"> <label for="num-frets">Número de trastes:</label>
+            <input type="number" id="num-frets" min="5" max="24" value="12">
+        </div>
+
+        <div class="visual-options-grid">
+            <div class="align-top">
+                <label for="position-select">Posición a estudiar:</label>
+                <select id="position-select">
+                    <option value="1" selected>1ra Posición (G#/Ab - D) [Trastes 1-7]</option>
+                    <option value="2">2da Posición (A#/Bb - E) [Trastes 3-9]</option>
+                    <option value="3">3ra Posición (C - F#/Gb) [Trastes 5-11]</option>
+                    <option value="4">4ta Posición (D - G) [Trastes 7-12]</option>
+                    <option value="5">5ta Posición (D#/Eb - A) [Trastes 8-14]</option>
+                    <option value="6">6ta Posición (F - B) [Trastes 10-16]</option>
+                    <option value="7">7ma Posición (G - C#) [Trastes 12-18]</option>
+                    <option value="8">8va Posición (G#/Ab - D) [Trastes 13-19]</option>
+                    <option value="9">9na Posición (A#/Bb - E) [Trastes 15-21]</option>
+                    <option value="10">10ma Posición (C - G) [Trastes 17-24]</option>
+                    <option value="all">Todas las notas (sin límite de posición)</option>
+                </select>
+                <div class="checkbox-group">
+                    <label>
+                        <input type="checkbox" id="show-position-marker" checked>
+                        Mostrar marcador de posición
+                    </label>
+                </div>
+
+                <h4>Visualización de Notas:</h4>
+                <div class="radio-group" id="note-display-options">
+                    <label>
+                        <input type="radio" name="noteDisplay" value="anglosaxon" checked>
+                        Anglosajón (C, D, E...)
+                    </label>
+                    <label>
+                        <input type="radio" name="noteDisplay" value="latin">
+                        Latino (Do, Re, Mi...)
+                    </label>
+                    <label>
+                        <input type="radio" name="noteDisplay" value="numeric">
+                        Numérico (1, b2, 2...)
+                    </label>
+                </div>
+            </div>
+
+            <div class="align-top">
+                <h4>Notas fuera de posición:</h4>
+                <div class="radio-group" id="out-of-position-notes-display">
+                    <label>
+                        <input type="radio" name="outOfPositionDisplay" value="transparent" checked>
+                        Con transparencia (25%)
+                    </label>
+                    <label>
+                        <input type="radio" name="outOfPositionDisplay" value="full-opacity">
+                        Sin transparencia (100%)
+                    </label>
+                    <label>
+                        <input type="radio" name="outOfPositionDisplay" value="hide">
+                        No mostrar
+                    </label>
+                </div>
+
+                <h4>Más opciones de visualización:</h4>
+                <div class="checkbox-group">
+                    <label>
+                        <input type="checkbox" id="show-outscale-notes">
+                        Mostrar notas fuera de escala
+                    </label>
+                    <label>
+                        <input type="checkbox" id="show-root-only">
+                        Mostrar solo nota raíz
+                    </label>
+                    <label id="show-template-label">
+                        <input type="checkbox" id="show-template-checkbox" checked>
+                        Mostrar Líneas Guía
+                    </label>
+                </div>
+            </div>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h3>Acciones</h3>
+        <button id="save-png-btn">Guardar como PNG</button>
+        <div id="color-controls">
+            </div>
+        </div>
+    </div>
+
+
+    <div id="fretboard-container">
+      <canvas id="fretboard"></canvas>
+    </div>
+
+    <div id="calibration-settings-section">
+        <h3>Ajustes de Calibración</h3>
+        <div id="calibration-buttons">
+            <button id="calibration-mode-toggle">Activar Calibración de Notas</button>
+            <button id="bracket-calibration-mode-toggle">Activar Calibración de Corchetes</button>
+        </div>
+        <div style="margin-top: 15px;">
+            <button id="export-coords-btn">Exportar Coordenadas de Notas</button>
+            <button id="reset-coords-btn">Restablecer Calibración de Notas</button>
+            <button id="reset-bracket-coords-btn">Restablecer Calibración de Corchetes</button>
+        </div>
+
+        <div style="margin-top: 20px;">
+            <h4>Puntos de Calibración de Notas a Mostrar:</h4>
+            <div id="calibration-points-selection">
+                </div>
+        </div>
+
+        <h3>Coordenadas de Notas Calibradas</h3>
+        <pre id="calibration-output"></pre>
+        <h3>Coordenadas de Corchetes Calibrados</h3>
+        <pre id="bracket-calibration-output"></pre>
+    </div>
+
+  </div>
+
+  <script>
+    (() => {
+      // --- Constantes y Configuraciones ---
+      const CHROMATIC_NOTE_NAMES_SHARP = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
+      const CHROMATIC_NOTE_NAMES_FLAT = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B'];
+      const CHROMATIC_NOTE_NAMES_LATIN = ['Do', 'Do♯', 'Re', 'Re♯', 'Mi', 'Fa', 'Fa♯', 'Sol', 'Sol♯', 'La', 'La♯', 'Si']; // Default a sostenidos para latín
+      const CHROMATIC_NOTE_NAMES_LATIN_FLAT = ['Do', 'Re♭', 'Re', 'Mi♭', 'Mi', 'Fa', 'Sol♭', 'Sol', 'La♭', 'La', 'Si♭', 'Si'];
+
+      const NOTE_TO_CHROMATIC_INDEX = {};
+      CHROMATIC_NOTE_NAMES_SHARP.forEach((note, index) => {
+        NOTE_TO_CHROMATIC_INDEX[note] = index;
+        NOTE_TO_CHROMATIC_INDEX[note.replace('♯', '#')] = index;
+      });
+      CHROMATIC_NOTE_NAMES_FLAT.forEach((note, index) => {
+        if (!NOTE_TO_CHROMATIC_INDEX[note]) { // Evitar sobrescribir si ya está mapeada por sharps
+          NOTE_TO_CHROMATIC_INDEX[note] = index;
+          NOTE_TO_CHROMATIC_INDEX[note.replace('♭', 'b')] = index;
+        }
+      });
+      // Asegurarse de que las notas comunes con b/desh/natural estén mapeadas
+      if (NOTE_TO_CHROMATIC_INDEX['Db'] === undefined) NOTE_TO_CHROMATIC_INDEX['Db'] = 1;
+      if (NOTE_TO_CHROMATIC_INDEX['Eb'] === undefined) NOTE_TO_CHROMATIC_INDEX['Eb'] = 3;
+      if (NOTE_TO_CHROMATIC_INDEX['Gb'] === undefined) NOTE_TO_CHROMATIC_INDEX['Gb'] = 6;
+      if (NOTE_TO_CHROMATIC_INDEX['Ab'] === undefined) NOTE_TO_CHROMATIC_INDEX['Ab'] = 8;
+      if (NOTE_TO_CHROMATIC_INDEX['Bb'] === undefined) NOTE_TO_CHROMATIC_INDEX['Bb'] = 10;
+      if (NOTE_TO_CHROMATIC_INDEX['C#'] === undefined) NOTE_TO_CHROMATIC_INDEX['C#'] = 1;
+      if (NOTE_TO_CHROMATIC_INDEX['D#'] === undefined) NOTE_TO_CHROMATIC_INDEX['D#'] = 3;
+      if (NOTE_TO_CHROMATIC_INDEX['F#'] === undefined) NOTE_TO_CHROMATIC_INDEX['F#'] = 6;
+      if (NOTE_TO_CHROMATIC_INDEX['G#'] === undefined) NOTE_TO_CHROMATIC_INDEX['G#'] = 8;
+      if (NOTE_TO_CHROMATIC_INDEX['A#'] === undefined) NOTE_TO_CHROMATIC_INDEX['A#'] = 10;
+      if (NOTE_TO_CHROMATIC_INDEX['Cb'] === undefined) NOTE_TO_CHROMATIC_INDEX['Cb'] = 11; // Cb is B
+      if (NOTE_TO_CHROMATIC_INDEX['Fb'] === undefined) NOTE_TO_CHROMATIC_INDEX['Fb'] = 4; // Fb is E
+
+      const VIOLIN_STRINGS = ['G', 'D', 'A', 'E']; // Cuerdas al aire del violín
+      const MAX_FRETS = 24; // Máximo de trastes para el violín
+
+      // Trastes clave para calibración manual (para guardar y para interpolación inicial)
+      const CALIBRATION_FRETS_DEFAULT = [1, 3, 5, 7, 9, 12, 15, 18, 21, 24]; // Puntos solicitados
+
+      const SCALES = {
+        major: [0, 2, 4, 5, 7, 9, 11],
+        minor: [0, 2, 3, 5, 7, 8, 10], // Natural Minor (Aeolian)
+        harmonic_minor: [0, 2, 3, 5, 7, 8, 11],
+        melodic_minor: [0, 2, 3, 5, 7, 9, 11], // Ascending Melodic Minor
+        dorian: [0, 2, 3, 5, 7, 9, 10],
+        mixolydian: [0, 2, 4, 5, 7, 9, 10],
+        lydian: [0, 2, 4, 6, 7, 9, 11],
+        phrygian: [0, 1, 3, 5, 7, 8, 10],
+        locrian: [0, 1, 3, 5, 6, 8, 10],
+        pentatonic_major: [0, 2, 4, 7, 9],
+        pentatonic_minor: [0, 3, 5, 7, 10],
+        blues: [0, 3, 5, 6, 7, 10], // Minor pentatonic + b5
+        chromatic: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+      };
+
+      // Define los nombres de las notas cromáticas según la tónica para asegurar enarmónicos correctos
+      const TONALITY_NOTE_NAMES = {
+        'C': CHROMATIC_NOTE_NAMES_SHARP,
+        'G': CHROMATIC_NOTE_NAMES_SHARP,
+        'D': CHROMATIC_NOTE_NAMES_SHARP,
+        'A': CHROMATIC_NOTE_NAMES_SHARP,
+        'E': CHROMATIC_NOTE_NAMES_SHARP,
+        'B': CHROMATIC_NOTE_NAMES_SHARP,
+        'F#': ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'], // E# is F
+        'F': CHROMATIC_NOTE_NAMES_FLAT,
+        'Bb': CHROMATIC_NOTE_NAMES_FLAT,
+        'Eb': CHROMATIC_NOTE_NAMES_FLAT,
+        'Ab': CHROMATIC_NOTE_NAMES_FLAT,
+        'Db': CHROMATIC_NOTE_NAMES_FLAT,
+        'Gb': ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B'] // No Cb or Fb for Gb
+      };
+
+      // Define los nombres de las notas cromáticas en sistema Latino según la tónica
+      const TONALITY_NOTE_NAMES_LATIN = {
+          'C': CHROMATIC_NOTE_NAMES_LATIN,
+          'G': CHROMATIC_NOTE_NAMES_LATIN,
+          'D': CHROMATIC_NOTE_NAMES_LATIN,
+          'A': CHROMATIC_NOTE_NAMES_LATIN,
+          'E': CHROMATIC_NOTE_NAMES_LATIN,
+          'B': CHROMATIC_NOTE_NAMES_LATIN,
+          'F#': ['Do', 'Do♯', 'Re', 'Re♯', 'Mi', 'Fa', 'Fa♯', 'Sol', 'Sol♯', 'La', 'La♯', 'Si'], // Fa#
+          'F': CHROMATIC_NOTE_NAMES_LATIN_FLAT,
+          'Bb': CHROMATIC_NOTE_NAMES_LATIN_FLAT,
+          'Eb': CHROMATIC_NOTE_NAMES_LATIN_FLAT,
+          'Ab': CHROMATIC_NOTE_NAMES_LATIN_FLAT,
+          'Db': CHROMATIC_NOTE_NAMES_LATIN_FLAT,
+          'Gb': ['Do', 'Re♭', 'Re', 'Mi♭', 'Mi', 'Fa', 'Sol♭', 'Sol', 'La♭', 'La', 'Si♭', 'Si'] // Solb
+      };
+
+      // Definición de las posiciones en términos de rangos de trastes
+      // La "4ta cuerda" se refiere a la cuerda G (índice 0 en VIOLIN_STRINGS)
+      const POSITIONS = {
+          '1': { fretRange: [0, 7] }, // Incluye traste 0 (cuerda al aire)
+          '2': { fretRange: [3, 9] },
+          '3': { fretRange: [5, 11] },
+          '4': { fretRange: [7, 12] },
+          '5': { fretRange: [8, 14] },
+          '6': { fretRange: [10, 16] },
+          '7': { fretRange: [12, 18] },
+          '8': { fretRange: [13, 19] },
+          '9': { fretRange: [15, 21] },
+          '10': { fretRange: [17, 24] },
+          'all': { fretRange: [0, MAX_FRETS] } // Para "Todas las notas"
+      };
+
+
+      // --- Estado de la Aplicación ---
+      const state = {
+        scaleType: 'major',
+        rootNote: 'C',
+        noteDisplayMode: 'anglosaxon',
+        showOutscaleNotes: false,
+        showRootOnly: false,
+        stringHighestOnTop: true,
+        colorsByDegree: [],
+        calibrationMode: false, // Ahora solo para notas
+        bracketCalibrationMode: false, // NUEVO: para corchetes
+        noteCoordinates: {},
+        bracketCoordinates: {},
+        showGuidelines: true,
+        guidelinesOpacity: 0.5,
+        selectedPosition: '1',
+        showPositionMarker: true,
+        outOfPositionDisplayMode: 'transparent',
+        backgroundImg: null,
+        guidelinesImg: null,
+        selectedCalibrationFrets: new Set(CALIBRATION_FRETS_DEFAULT) // Nuevo: para seleccionar trastes a calibrar
+      };
+
+      // --- Elementos del DOM ---
+      const canvas = document.getElementById('fretboard');
+      const ctx = canvas.getContext('2d');
+      const container = document.getElementById('fretboard-container');
+      const colorControlsContainer = document.getElementById('color-controls');
+      const scaleNotesList = document.getElementById('scale-notes-list');
+
+      const calibrationModeToggle = document.getElementById('calibration-mode-toggle');
+      const bracketCalibrationModeToggle = document.getElementById('bracket-calibration-mode-toggle'); // NUEVO
+      const calibrationOutput = document.getElementById('calibration-output');
+      const bracketCalibrationOutput = document.getElementById('bracket-calibration-output');
+      const calibrationSettingsSection = document.getElementById('calibration-settings-section');
+      const exportCoordsBtn = document.getElementById('export-coords-btn');
+      const resetCoordsBtn = document.getElementById('reset-coords-btn');
+      const resetBracketCoordsBtn = document.getElementById('reset-bracket-coords-btn');
+      const calibrationPointsSelection = document.getElementById('calibration-points-selection'); // Nuevo elemento
+
+      const noteDisplayOptions = document.getElementById('note-display-options');
+      const positionSelect = document.getElementById('position-select');
+      const showPositionMarkerCheckbox = document.getElementById('show-position-marker');
+      const outOfPositionNotesDisplay = document.getElementById('out-of-position-notes-display');
+
+      const showTemplateCheckbox = document.getElementById('show-template-checkbox');
+      const resetColorsBtn = document.createElement('button');
+
+      // Variables para arrastrar notas de calibración
+      let draggingElement = null; // Puede ser una nota o un punto de control del corchete
+      let draggingType = null; // 'note' o 'bracket'
+      let mouseOffsetX, mouseOffsetY; // Offset del clic dentro del elemento arrastable
+
+      // Nombres de las imágenes
+      const BACKGROUND_IMAGE_NAME = 'Violín White A. Unlabelled.png';
+      const GUIDELINES_IMAGE_NAME = 'Líneas Guía- Violín White A. Unlabelled.png';
+      
+      // Dimensiones de la imagen base (AJUSTADAS)
+      const IMAGE_WIDTH = 1600;
+      const IMAGE_HEIGHT = 820;
+
+      // Puntos de calibración por defecto (se usarán si no hay datos guardados)
+      // Ajustados para la nueva imagen de 1600x820
+      const DEFAULT_CALIBRATION_POINTS = {
+          // Cuerda E (más aguda, superior en stringHighestOnTop: true) - String Index 3
+          3: {
+            0: { x: 15, y: 346 },
+            1: { x: 125, y: 342 },
+            3: { x: 348, y: 337 },
+            5: { x: 520, y: 331 },
+            7: { x: 700, y: 327 },
+            9: { x: 820, y: 324 },
+            12: { x: 978, y: 321 },
+            15: { x: 1120, y: 317 },
+            18: { x: 1250, y: 313 },
+            21: { x: 1370, y: 310 },
+            24: { x: 1483, y: 307 }
+          },
+          // Cuerda A - String Index 2
+          2: {
+            0: { x: 14, y: 378 },
+            1: { x: 124, y: 374 },
+            3: { x: 347, y: 369 },
+            5: { x: 519, y: 366 },
+            7: { x: 699, y: 362 },
+            9: { x: 819, y: 359 },
+            12: { x: 976, y: 366 },
+            15: { x: 1119, y: 364 },
+            18: { x: 1249, y: 362 },
+            21: { x: 1369, y: 361 },
+            24: { x: 1485, y: 360 }
+          },
+          // Cuerda D - String Index 1
+          1: {
+            0: { x: 14, y: 407 },
+            1: { x: 123, y: 404 },
+            3: { x: 346, y: 402 },
+            5: { x: 518, y: 400 },
+            7: { x: 698, y: 399 },
+            9: { x: 818, y: 398 },
+            12: { x: 975, y: 413 },
+            15: { x: 1118, y: 415 },
+            18: { x: 1248, y: 417 },
+            21: { x: 1368, y: 418 },
+            24: { x: 1486, y: 419 }
+          },
+          // Cuerda G (más grave, inferior en stringHighestOnTop: true) - String Index 0
+          0: {
+            0: { x: 14, y: 437 },
+            1: { x: 122, y: 436 },
+            3: { x: 345, y: 439 },
+            5: { x: 517, y: 442 },
+            7: { x: 697, y: 446 },
+            9: { x: 817, y: 449 },
+            12: { x: 974, y: 463 },
+            15: { x: 1117, y: 470 },
+            18: { x: 1247, y: 474 },
+            21: { x: 1367, y: 476 },
+            24: { x: 1484, y: 476 }
+          },
+      };
+
+      // NUEVO: Coordenadas por defecto para los puntos de control de los corchetes de posición
+      // Cada posición tendrá 4 puntos: 'horizontalLeft', 'horizontalRight', 'verticalLeftBottom', 'verticalRightBottom', 'horizontalBottom'
+      const DEFAULT_BRACKET_COORDS = {
+          '1': {
+              horizontalLeft: { x: 15, y: 320 },
+              horizontalRight: { x: 700, y: 310 },
+              verticalLeftBottom: { x: 15, y: 455 },
+              verticalRightBottom: { x: 700, y: 485 },
+              horizontalBottom: { x: 15, y: 470 } // Usará x de verticalLeftBottom y x de verticalRightBottom
+          },
+          '2': {
+              horizontalLeft: { x: 348, y: 315 },
+              horizontalRight: { x: 820, y: 310 },
+              verticalLeftBottom: { x: 345, y: 450 },
+              verticalRightBottom: { x: 817, y: 470 },
+              horizontalBottom: { x: 345, y: 460 }
+          },
+          '3': {
+              horizontalLeft: { x: 520, y: 310 },
+              horizontalRight: { x: 978, y: 305 },
+              verticalLeftBottom: { x: 517, y: 445 },
+              verticalRightBottom: { x: 974, y: 480 },
+              horizontalBottom: { x: 517, y: 465 }
+          },
+          '4': {
+              horizontalLeft: { x: 700, y: 305 },
+              horizontalRight: { x: 1080, y: 300 }, // Extendido un poco más allá del traste 12 para dar espacio
+              verticalLeftBottom: { x: 697, y: 450 },
+              verticalRightBottom: { x: 1070, y: 490 },
+              horizontalBottom: { x: 697, y: 470 }
+          },
+          '5': {
+              horizontalLeft: { x: 820, y: 300 },
+              horizontalRight: { x: 1120, y: 295 },
+              verticalLeftBottom: { x: 817, y: 460 },
+              verticalRightBottom: { x: 1117, y: 495 },
+              horizontalBottom: { x: 817, y: 480 }
+          },
+          '6': {
+              horizontalLeft: { x: 1020, y: 290 }, // Ajustado para cubrir 10-16
+              horizontalRight: { x: 1250, y: 285 },
+              verticalLeftBottom: { x: 1017, y: 480 },
+              verticalRightBottom: { x: 1247, y: 500 },
+              horizontalBottom: { x: 1017, y: 490 }
+          },
+          '7': {
+              horizontalLeft: { x: 1200, y: 280 }, // Ajustado para cubrir 12-18
+              horizontalRight: { x: 1370, y: 275 },
+              verticalLeftBottom: { x: 1197, y: 490 },
+              verticalRightBottom: { x: 1367, y: 505 },
+              horizontalBottom: { x: 1197, y: 500 }
+          },
+          '8': {
+              horizontalLeft: { x: 1280, y: 270 }, // Ajustado para cubrir 13-19
+              horizontalRight: { x: 1450, y: 265 },
+              verticalLeftBottom: { x: 1277, y: 500 },
+              verticalRightBottom: { x: 1447, y: 510 },
+              horizontalBottom: { x: 1277, y: 500 }
+          },
+          '9': {
+              horizontalLeft: { x: 1370, y: 260 }, // Ajustado para cubrir 15-21
+              horizontalRight: { x: 1483, y: 255 },
+              verticalLeftBottom: { x: 1367, y: 505 },
+              verticalRightBottom: { x: 1480, y: 515 },
+              horizontalBottom: { x: 1367, y: 505 }
+          },
+          '10': {
+              horizontalLeft: { x: 1480, y: 250 }, // Ajustado para cubrir 17-24
+              horizontalRight: { x: 1550, y: 245 }, // Más allá del traste 24
+              verticalLeftBottom: { x: 1477, y: 510 },
+              verticalRightBottom: { x: 1500, y: 520 },
+              horizontalBottom: { x: 1477, y: 510 }
+          }
+      };
+
+
+      // --- Funciones de Carga de Recursos ---
+      function loadImage(src) {
+          return new Promise((resolve, reject) => {
+              const img = new Image();
+              img.src = src;
+              img.onload = () => {
+                console.log(`IMAGEN CARGADA: ${src}`); // Debugging: Confirmación de carga
+                resolve(img);
+              };
+              img.onerror = () => {
+                console.error(`ERROR AL CARGAR IMAGEN: ${src}`); // Debugging: Error de carga
+                reject(new Error(`Failed to load image: ${src}`));
+              };
+          });
+      }
+
+      // --- Funciones de Carga/Guardado de Datos ---
+      function loadCalibrationPoints() {
+          console.log("Cargando puntos de calibración..."); // Debugging
+          const savedCoords = localStorage.getItem('violinFretboardCoords');
+          if (savedCoords) {
+              try {
+                  const parsedCoords = JSON.parse(savedCoords);
+                  // Validar que los datos cargados tengan la estructura esperada
+                  if (Object.keys(parsedCoords).length > 0 && parsedCoords['0'] && parsedCoords['0']['0']) {
+                      state.noteCoordinates = parsedCoords;
+                      console.log("Puntos de calibración cargados desde localStorage."); // Debugging
+                  } else {
+                      console.warn("Datos de calibración en localStorage inválidos o incompletos. Usando valores por defecto."); // Debugging
+                      resetCalibrationPointsInternal(); // Función interna para resetear sin alertar
+                  }
+              } catch (e) {
+                  console.error("Error al parsear puntos de calibración desde localStorage:", e); // Debugging
+                  resetCalibrationPointsInternal();
+              }
+          } else {
+              console.log("No se encontraron puntos de calibración en localStorage. Usando valores por defecto."); // Debugging
+              resetCalibrationPointsInternal();
+          }
+          calculateIntermediateFretPositions();
+          console.log("state.noteCoordinates después de cargar/inicializar:", state.noteCoordinates); // Debugging
+      }
+
+      function saveCalibrationPoints() {
+          localStorage.setItem('violinFretboardCoords', JSON.stringify(state.noteCoordinates));
+          updateCalibrationOutput();
+          console.log("Puntos de calibración guardados."); // Debugging
+      }
+
+      function resetCalibrationPoints() {
+          if (confirm('¿Estás seguro de que quieres restablecer todas las coordenadas de calibración de notas a sus valores por defecto? Esto eliminará cualquier cambio manual.')) {
+              resetCalibrationPointsInternal();
+              drawFretboard();
+              updateCalibrationOutput();
+              alert('Coordenadas de calibración de notas restablecidas.');
+          }
+      }
+
+      function resetCalibrationPointsInternal() {
+          localStorage.removeItem('violinFretboardCoords');
+          state.noteCoordinates = {};
+          for (const stringIdx in DEFAULT_CALIBRATION_POINTS) {
+              state.noteCoordinates[stringIdx] = { ...DEFAULT_CALIBRATION_POINTS[stringIdx] };
+          }
+      }
+
+      // NUEVAS funciones para los corchetes
+      function loadBracketCoordinates() {
+          console.log("Cargando coordenadas de corchetes..."); // Debugging
+          const savedBracketCoords = localStorage.getItem('violinBracketCoords');
+          if (savedBracketCoords) {
+              try {
+                  const parsedBracketCoords = JSON.parse(savedBracketCoords);
+                  if (Object.keys(parsedBracketCoords).length > 0 && parsedBracketCoords['1'] && parsedBracketCoords['1'].horizontalLeft) {
+                      state.bracketCoordinates = parsedBracketCoords;
+                      console.log("Coordenadas de corchetes cargadas desde localStorage."); // Debugging
+                  } else {
+                      console.warn("Datos de corchetes en localStorage inválidos o incompletos. Usando valores por defecto."); // Debugging
+                      resetBracketCoordinatesInternal();
+                  }
+              } catch (e) {
+                  console.error("Error al parsear coordenadas de corchetes desde localStorage:", e); // Debugging
+                  resetBracketCoordinatesInternal();
+              }
+          } else {
+              console.log("No se encontraron coordenadas de corchetes en localStorage. Usando valores por defecto."); // Debugging
+              resetBracketCoordinatesInternal();
+          }
+          console.log("state.bracketCoordinates después de cargar/inicializar:", state.bracketCoordinates); // Debugging
+      }
+
+      function saveBracketCoordinates() {
+          localStorage.setItem('violinBracketCoords', JSON.stringify(state.bracketCoordinates));
+          updateBracketCalibrationOutput();
+          console.log("Coordenadas de corchetes guardadas."); // Debugging
+      }
+
+      function resetBracketCoordinates() {
+          if (confirm('¿Estás seguro de que quieres restablecer todas las coordenadas de calibración de corchetes a sus valores por defecto? Esto eliminará cualquier cambio manual.')) {
+              resetBracketCoordinatesInternal();
+              drawFretboard();
+              updateBracketCalibrationOutput();
+              alert('Coordenadas de calibración de corchetes restablecidas.');
+          }
+      }
+
+      function resetBracketCoordinatesInternal() {
+          localStorage.removeItem('violinBracketCoords');
+          state.bracketCoordinates = JSON.parse(JSON.stringify(DEFAULT_BRACKET_COORDS)); // Deep copy
+      }
+
+      // Función de interpolación lineal para un punto entre p1 y p2
+      function interpolate(p1, p2, ratio) {
+        return {
+          x: p1.x + (p2.x - p1.x) * ratio,
+          y: p1.y + (p2.y - p1.y) * ratio
+        };
+      }
+
+      function calculateIntermediateFretPositions() {
+          console.log("Calculando posiciones de trastes intermedias..."); // Debugging
+          for (let s = 0; s < VIOLIN_STRINGS.length; s++) {
+              if (!state.noteCoordinates[s]) {
+                  state.noteCoordinates[s] = {};
+              }
+
+              const currentKeyPoints = [];
+              // Recopilar solo los puntos de calibración seleccionados o el traste 0, que tienen coordenadas guardadas o por defecto
+              const fretsToConsider = Array.from(state.selectedCalibrationFrets).concat([0]).sort((a,b) => a - b);
+              
+              fretsToConsider.forEach(fret => {
+                  if (state.noteCoordinates[s] && state.noteCoordinates[s][fret]) {
+                      currentKeyPoints.push({ fret: fret, coords: state.noteCoordinates[s][fret] });
+                  }
+              });
+
+              // Asegurarse de que los puntos clave estén ordenados por traste
+              currentKeyPoints.sort((a, b) => a.fret - b.fret);
+
+              // Si no hay puntos clave suficientes, o solo el traste 0, no podemos interpolar
+              if (currentKeyPoints.length < 2) {
+                  // Si solo hay un punto (el traste 0), usarlo para todas las notas
+                  if (currentKeyPoints.length === 1 && currentKeyPoints[0].fret === 0) {
+                      for (let fret = 1; fret <= MAX_FRETS; fret++) {
+                          // Solo si la nota NO es un punto de calibración seleccionado
+                          if (!state.selectedCalibrationFrets.has(fret)) {
+                             state.noteCoordinates[s][fret] = { ...currentKeyPoints[0].coords };
+                          }
+                      }
+                  }
+                  continue;
+              }
+
+              // Interpolar entre puntos clave
+              for (let i = 0; i < currentKeyPoints.length - 1; i++) {
+                  const p1 = currentKeyPoints[i];
+                  const p2 = currentKeyPoints[i + 1];
+
+                  for (let fret = p1.fret + 1; fret < p2.fret; fret++) {
+                      // Solo interpolar si el traste NO es un punto de calibración explícito
+                      if (!state.selectedCalibrationFrets.has(fret)) {
+                          const ratio = (fret - p1.fret) / (p2.fret - p1.fret);
+                          state.noteCoordinates[s][fret] = interpolate(p1.coords, p2.coords, ratio);
+                      }
+                  }
+              }
+
+              // Extrapolar si el último punto de anclaje no llega hasta MAX_FRETS
+              const lastKeyPoint = currentKeyPoints[currentKeyPoints.length - 1];
+              if (lastKeyPoint && lastKeyPoint.fret < MAX_FRETS) {
+                  if (currentKeyPoints.length >= 2) {
+                      const pPrev = currentKeyPoints[currentKeyPoints.length - 2];
+                      const pLast = lastKeyPoint;
+
+                      let dxPerFret = (pLast.coords.x - pPrev.coords.x) / (pLast.fret - pPrev.fret);
+                      let dyPerFret = (pLast.coords.y - pPrev.coords.y) / (pLast.fret - pPrev.fret);
+
+                      for (let fret = lastKeyPoint.fret + 1; fret <= MAX_FRETS; fret++) {
+                           // Solo si la nota NO es un punto de calibración seleccionado
+                          if (!state.selectedCalibrationFrets.has(fret)) {
+                              state.noteCoordinates[s][fret] = {
+                                  x: pLast.coords.x + (fret - pLast.fret) * dxPerFret,
+                                  y: pLast.coords.y + (fret - pLast.fret) * dyPerFret
+                              };
+                          }
+                      }
+                  } else {
+                      // Caso borde: solo hay un punto (el 0), y extrapolamos a partir de él
+                      for (let fret = lastKeyPoint.fret + 1; fret <= MAX_FRETS; fret++) {
+                          // Solo si la nota NO es un punto de calibración seleccionado
+                          if (!state.selectedCalibrationFrets.has(fret)) {
+                              state.noteCoordinates[s][fret] = { ...lastKeyPoint.coords }; // Mantener las mismas coordenadas
+                          }
+                      }
+                  }
+              }
+          }
+      }
+
+
+      // --- Funciones de Configuración de Tonalidad y Escala ---
+      function initDefaultColors() {
+        state.colorsByDegree = [
+          '#F90000', // Tónica
+          '#DB7900', // Segunda
+          '#EDC00C', // Tercera
+          '#0EB8F1', // Cuarta
+          '#173AE8', // Quinta
+          '#851CB5', // Sexta
+          '#FF5DC1'  // Séptima
+        ];
+        updateColorControls();
+      }
+
+      function getChromaticIndex(noteName) {
+        const normalizedNoteName = noteName.replace('♯', '#').replace('♭', 'b');
+        return NOTE_TO_CHROMATIC_INDEX[normalizedNoteName] !== undefined ? NOTE_TO_CHROMATIC_INDEX[normalizedNoteName] : -1;
+      }
+
+      function getNoteNameForDisplay(chromaticIndex, rootNoteChromaticIndex, mode) {
+        let noteName;
+        let preferredNames;
+
+        switch (mode) {
+            case 'latin':
+                preferredNames = TONALITY_NOTE_NAMES_LATIN[state.rootNote];
+                if (!preferredNames) {
+                    preferredNames = CHROMATIC_NOTE_NAMES_LATIN;
+                }
+                noteName = preferredNames[chromaticIndex];
+                break;
+            case 'anglosaxon':
+                preferredNames = TONALITY_NOTE_NAMES[state.rootNote];
+                if (!preferredNames) {
+                    preferredNames = CHROMATIC_NOTE_NAMES_SHARP;
+                }
+                noteName = preferredNames[chromaticIndex];
+                break;
+            case 'numeric':
+                const semitoneFromRoot = (chromaticIndex - rootNoteChromaticIndex + 12) % 12;
+                const scaleIntervals = SCALES[state.scaleType];
+
+                switch (semitoneFromRoot) {
+                    case 0: noteName = '1'; break;
+                    case 1: noteName = 'b2'; break;
+                    case 2: noteName = '2'; break;
+                    case 3: noteName = 'b3'; break;
+                    case 4: noteName = '3'; break;
+                    case 5: noteName = '4'; break;
+                    case 6:
+                        if (state.scaleType === 'chromatic') {
+                             noteName = '#4 / b5';
+                        } else if (scaleIntervals.includes(5) && !scaleIntervals.includes(7)) {
+                            noteName = '#4';
+                        } else if (scaleIntervals.includes(7) && !scaleIntervals.includes(5)) {
+                            noteName = 'b5';
+                        } else {
+                             noteName = '#4';
+                        }
+                        break;
+                    case 7: noteName = '5'; break;
+                    case 8: noteName = 'b6'; break;
+                    case 9: noteName = '6'; break;
+                    case 10: noteName = 'b7'; break;
+                    case 11: noteName = '7'; break;
+                    default: noteName = '';
+                }
+                break;
+            default:
+                noteName = preferredNames[chromaticIndex];
+        }
+        return noteName;
+      }
+
+
+      function updateColorControls() {
+        colorControlsContainer.innerHTML = '';
+        const intervals = SCALES[state.scaleType];
+
+        const rootNoteChromaticIndex = getChromaticIndex(state.rootNote);
+        if (rootNoteChromaticIndex === -1) {
+            console.error("Nota raíz no reconocida para colores:", state.rootNote);
+            return;
+        }
+
+        while (state.colorsByDegree.length < intervals.length) {
+            state.colorsByDegree.push('#CCCCCC');
+        }
+
+        for (let i = 0; i < intervals.length; i++) {
+          const noteChromaticIndex = (rootNoteChromaticIndex + intervals[i]) % 12;
+          const noteNameAnglosaxon = getNoteNameForDisplay(noteChromaticIndex, rootNoteChromaticIndex, 'anglosaxon');
+          const noteNameLatin = getNoteNameForDisplay(noteChromaticIndex, rootNoteChromaticIndex, 'latin');
+          const noteNameNumeric = getNoteNameForDisplay(noteChromaticIndex, rootNoteChromaticIndex, 'numeric');
+
+          const colorControl = document.createElement('div');
+          colorControl.className = 'color-control';
+
+          const label = document.createElement('label');
+          label.innerHTML = `${noteNameAnglosaxon}<br>${noteNameLatin}<br>${noteNameNumeric}`; // Usa innerHTML para <br>
+          label.htmlFor = `color-degree-${i}`;
+
+          const input = document.createElement('input');
+          input.type = 'color';
+          input.className = 'color-input';
+          input.id = `color-degree-${i}`;
+          input.value = state.colorsByDegree[i];
+          input.dataset.degreeIndex = i;
+
+          input.addEventListener('input', (e) => {
+            const idx = Number(e.target.dataset.degreeIndex);
+            state.colorsByDegree[idx] = e.target.value;
+            drawFretboard();
+          });
+
+          colorControl.appendChild(label);
+          colorControl.appendChild(input);
+          colorControlsContainer.appendChild(colorControl);
+        }
+
+        // Añadir el botón "Restablecer colores" al final del contenedor de colores
+        resetColorsBtn.id = 'reset-colors-btn';
+        resetColorsBtn.textContent = 'Restablecer colores';
+        colorControlsContainer.appendChild(resetColorsBtn);
+      }
+
+      function updateScaleNotesDisplay() {
+        const rootIndexInChromatic = getChromaticIndex(state.rootNote);
+        if (rootIndexInChromatic === -1) {
+            scaleNotesList.textContent = "Error: Nota raíz no reconocida.";
+            return;
+        }
+
+        const scaleIntervals = SCALES[state.scaleType];
+        const scaleNotes = scaleIntervals.map(interval => {
+            const chromaticIndex = (rootIndexInChromatic + interval) % 12;
+            return getNoteNameForDisplay(chromaticIndex, rootIndexInChromatic, state.noteDisplayMode);
+        });
+        scaleNotesList.textContent = `${scaleNotes.join(', ')}`;
+      }
+
+      /**
+       * Determina si una nota (string al aire + traste) está dentro del rango de trastes de la posición seleccionada.
+       * La primera posición (value='1') es la única que incluye las cuerdas al aire (fret 0).
+       * Para otras posiciones, las cuerdas al aire no se consideran "dentro de la posición".
+       * @param {number} fretNumber Número de traste
+       * @returns {boolean} True si la nota está dentro del rango de trastes, false en caso contrario.
+       */
+      function isNoteInSelectedFretRange(fretNumber) {
+          const positionDef = POSITIONS[state.selectedPosition];
+
+          if (!positionDef) return false;
+
+          const [minFret, maxFret] = positionDef.fretRange;
+
+          // Si la posición es '1', el traste 0 es válido
+          if (state.selectedPosition === '1' && fretNumber === 0) {
+              return true;
+          }
+          // Para cualquier otra posición que no sea '1', el traste 0 no es válido
+          if (state.selectedPosition !== '1' && fretNumber === 0) {
+              return false;
+          }
+
+          // Verificar si el traste está dentro del rango definido para la posición
+          return (fretNumber >= minFret && fretNumber <= maxFret);
+      }
+
+
+      // --- Funciones de Dibujo del Diapasón ---
+      function clearCanvas() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+
+      function drawFretboard() {
+        // console.log("Iniciando drawFretboard..."); // Debugging
+        clearCanvas();
+
+        canvas.width = IMAGE_WIDTH;
+        canvas.height = IMAGE_HEIGHT;
+        container.style.width = `${IMAGE_WIDTH}px`;
+        container.style.height = `${IMAGE_HEIGHT}px`;
+
+        if (state.backgroundImg) {
+            ctx.drawImage(state.backgroundImg, 0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
+            // console.log("Fondo dibujado."); // Debugging
+        } else {
+            console.warn("Imagen de fondo no cargada. Dibujando un fondo blanco."); // Debugging
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
+        }
+
+        if (state.showGuidelines && state.guidelinesImg) {
+            ctx.globalAlpha = state.guidelinesOpacity;
+            ctx.drawImage(state.guidelinesImg, 0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
+            ctx.globalAlpha = 1.0;
+            // console.log("Líneas guía dibujadas."); // Debugging
+        } else if (state.showGuidelines && !state.guidelinesImg) {
+            console.warn("Imagen de líneas guía activada pero no cargada."); // Debugging
+        }
+
+        // LIMPIEZA DE ELEMENTOS ANTERIORES:
+        // Eliminar elementos DOM de notas y corchetes anteriores
+        const prevElements = container.querySelectorAll('.open-note, .bracket-control-point, .position-marker-bracket, .bracket-line, .position-marker-text, .calibration-line');
+        prevElements.forEach(el => el.remove());
+
+
+        // --- Dibujar el marcador de posición ---
+        if (state.showPositionMarker && state.selectedPosition !== 'all') {
+            const positionCoords = state.bracketCoordinates[state.selectedPosition];
+
+            if (positionCoords) {
+                // Crear un contenedor para el corchete para aplicar estilos
+                const bracketContainer = document.createElement('div');
+                bracketContainer.className = 'position-marker-bracket';
+                container.appendChild(bracketContainer);
+
+                // Función auxiliar para crear y añadir una línea
+                const createLine = (x1, y1, x2, y2) => {
+                    const line = document.createElement('div');
+                    line.className = 'bracket-line';
+                    line.style.left = `${x1}px`;
+                    line.style.top = `${y1}px`;
+                    
+                    const length = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+                    const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+
+                    line.style.width = `${length}px`;
+                    line.style.transform = `rotate(${angle}deg)`;
+                    line.style.transformOrigin = `0 0`; // Rotar desde el inicio de la línea
+                    bracketContainer.appendChild(line);
+                };
+
+                // Línea horizontal superior
+                createLine(positionCoords.horizontalLeft.x, positionCoords.horizontalLeft.y,
+                           positionCoords.horizontalRight.x, positionCoords.horizontalRight.y);
+
+                // Línea vertical izquierda
+                createLine(positionCoords.horizontalLeft.x, positionCoords.horizontalLeft.y,
+                           positionCoords.verticalLeftBottom.x, positionCoords.verticalLeftBottom.y);
+
+                // Línea vertical derecha
+                createLine(positionCoords.horizontalRight.x, positionCoords.horizontalRight.y,
+                           positionCoords.verticalRightBottom.x, positionCoords.verticalRightBottom.y);
+
+                // NUEVO: Línea horizontal inferior
+                createLine(positionCoords.verticalLeftBottom.x, positionCoords.verticalLeftBottom.y,
+                           positionCoords.verticalRightBottom.x, positionCoords.verticalRightBottom.y);
+
+
+                // Texto del marcador
+                const textDiv = document.createElement('div');
+                textDiv.className = 'position-marker-text';
+                textDiv.textContent = `${state.selectedPosition}ª Posición`;
+                const midXText = (positionCoords.horizontalLeft.x + positionCoords.horizontalRight.x) / 2;
+                const midYText = (positionCoords.horizontalLeft.y + positionCoords.horizontalRight.y) / 2;
+                textDiv.style.left = `${midXText}px`;
+                textDiv.style.top = `${midYText - 5}px`; // Un poco por encima de la línea superior
+                bracketContainer.appendChild(textDiv);
+            }
+
+            // Dibuja los puntos de control del corchete SOLO si el modo de calibración de corchetes está activo
+            if (state.bracketCalibrationMode && positionCoords) {
+                for (const key in positionCoords) {
+                    if (positionCoords.hasOwnProperty(key)) {
+                        const point = positionCoords[key];
+                        const controlPointDiv = document.createElement('div');
+                        controlPointDiv.className = 'bracket-control-point';
+                        controlPointDiv.style.left = `${point.x}px`;
+                        controlPointDiv.style.top = `${point.y}px`;
+                        controlPointDiv.dataset.positionId = state.selectedPosition;
+                        controlPointDiv.dataset.pointKey = key; // e.g., 'horizontalLeft'
+                        container.appendChild(controlPointDiv);
+                    }
+                }
+            }
+        }
+
+
+        const stringsOrdered = [...VIOLIN_STRINGS].reverse();
+
+        stringsOrdered.forEach((stringName, i) => {
+            const stringIndexInViolinStrings = (VIOLIN_STRINGS.length - 1 - i);
+
+            const openNoteIndexInChromatic = getChromaticIndex(stringName);
+            if (openNoteIndexInChromatic === -1) {
+                console.warn(`Cuerda al aire no reconocida: ${stringName}`);
+                return;
+            }
+
+            const rootIndexInChromatic = getChromaticIndex(state.rootNote);
+            if (rootIndexInChromatic === -1) {
+                console.error("Nota raíz no reconocida para el dibujo:", state.rootNote);
+                return;
+            }
+            const scaleIntervals = SCALES[state.scaleType];
+
+            for (let fret = 0; fret <= MAX_FRETS; fret++) { // Iterar sobre todos los trastes posibles
+                const currentNoteChromaticIndex = (openNoteIndexInChromatic + fret) % 12;
+                let semitoneFromRoot = (currentNoteChromaticIndex - rootIndexInChromatic + 12) % 12;
+                const inScale = scaleIntervals.includes(semitoneFromRoot);
+
+                const showNoteBasedOnFilter = (inScale || state.showOutscaleNotes) &&
+                                 (!state.showRootOnly || semitoneFromRoot === 0);
+                
+                // Determinar si la nota está dentro del rango de trastes de la posición seleccionada
+                const isInSelectedPositionRange = isNoteInSelectedFretRange(fret);
+
+                // Si la posición es 'all' o estamos en modo calibración de NOTAS, siempre se dibuja todo lo que pase por los filtros
+                if (state.calibrationMode || state.selectedPosition === 'all') {
+                     // Continua con el dibujo normal si pasa los filtros showNoteBasedOnFilter
+                } else if (!isInSelectedPositionRange) {
+                    // Si la nota está fuera de la posición seleccionada y no es 'all'
+                    if (state.outOfPositionDisplayMode === 'hide') {
+                        continue; // No mostrar
+                    } else if (state.outOfPositionDisplayMode === 'transparent') {
+                        // Se dibujará con transparencia, se setea más abajo
+                    } else if (state.outOfPositionDisplayMode === 'full-opacity') {
+                        // Se dibujará con opacidad total, se setea más abajo
+                    }
+                } else if (isInSelectedPositionRange && fret === 0 && state.selectedPosition !== '1') {
+                    // Si es la primera posición y estamos en fret 0, siempre es visible
+                    // Si no es la primera posición y estamos en fret 0, no se dibuja (excluido en isNoteInSelectedFretRange)
+                    continue; // Ya cubierto por isNoteInSelectedFretRange
+                }
+
+                // Si la nota no debe mostrarse en absoluto según los filtros (showOutscaleNotes, showRootOnly), salta
+                // En modo calibración de NOTAS, siempre dibujamos TODAS las notas con texto de traste
+                if (!showNoteBasedOnFilter && !state.calibrationMode) continue;
+
+                const coords = state.noteCoordinates[stringIndexInViolinStrings]?.[fret];
+                if (!coords) {
+                    console.error(`Coordenadas no encontradas para cuerda ${stringIndexInViolinStrings}, traste ${fret}. Saltar dibujo.`); // Debugging
+                    continue;
+                }
+
+                let noteRadius;
+                let fontSize;
+                if (fret >= 22) {
+                    noteRadius = 12;
+                    fontSize = 12;
+                } else if (fret >= 20) {
+                    noteRadius = 13;
+                    fontSize = 13;
+                } else {
+                    noteRadius = 14;
+                    fontSize = 14;
+                }
+
+                let displayText = '';
+                if (state.showRootOnly && semitoneFromRoot === 0) {
+                    displayText = getNoteNameForDisplay(currentNoteChromaticIndex, rootIndexInChromatic, state.noteDisplayMode);
+                } else {
+                    displayText = getNoteNameForDisplay(currentNoteChromaticIndex, rootIndexInChromatic, state.noteDisplayMode);
+                }
+
+                let noteColor = '#bbb';
+                if (inScale) {
+                    const degreeIndex = scaleIntervals.indexOf(semitoneFromRoot);
+                    noteColor = state.colorsByDegree[degreeIndex] || '#3498db';
+                }
+
+                // Establecer opacidad para el dibujo en el canvas
+                let noteOpacity = 1.0;
+                if (!state.calibrationMode && state.selectedPosition !== 'all') { // Si no estamos en modo calibración de notas
+                    if (!isInSelectedPositionRange) { // Si la nota está fuera de la posición seleccionada
+                        if (state.outOfPositionDisplayMode === 'transparent') {
+                            noteOpacity = 0.25;
+                        } else if (state.outOfPositionDisplayMode === 'full-opacity') {
+                            noteOpacity = 1.0;
+                        }
+                    } else if (isInSelectedPositionRange) { // Si la nota está DENTRO de la posición seleccionada
+                        noteOpacity = 1.0; // Siempre opacidad total para notas en posición
+                    }
+                }
+                
+                ctx.globalAlpha = noteOpacity;
+
+                ctx.beginPath();
+                ctx.arc(coords.x, coords.y, noteRadius, 0, Math.PI * 2);
+                ctx.fillStyle = noteColor;
+                ctx.fill();
+
+                if (displayText) {
+                    ctx.fillStyle = '#fff';
+                    ctx.font = `${fontSize}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(displayText, coords.x, coords.y);
+                }
+                ctx.globalAlpha = 1.0;
+
+                // En modo calibración de NOTAS, mostrar puntos arrastrables solo para los trastes seleccionados y traste 0
+                if (state.calibrationMode) {
+                    if (fret === 0 || state.selectedCalibrationFrets.has(fret)) {
+                        const draggableNote = document.createElement('div');
+                        draggableNote.className = 'open-note draggable';
+                        draggableNote.style.left = `${coords.x}px`;
+                        draggableNote.style.top = `${coords.y}px`;
+                        draggableNote.style.backgroundColor = noteColor;
+                        draggableNote.dataset.stringIndex = stringIndexInViolinStrings;
+                        draggableNote.dataset.fretNumber = fret;
+                        draggableNote.textContent = `${fret === 0 ? 'Nut' : fret}`;
+                        draggableNote.style.width = `${noteRadius * 2}px`;
+                        draggableNote.style.height = `${noteRadius * 2}px`;
+                        draggableNote.style.fontSize = `${fontSize}px`;
+                        container.appendChild(draggableNote);
+                    }
+                 }
+            }
+        });
+
+        // Dibujar líneas de calibración (solo en modo calibración de NOTAS)
+        if (state.calibrationMode) {
+            // Asegurarse de que el contenedor tenga la clase para las líneas de calibración
+            container.classList.add('calibration-mode-active');
+
+            for (let s = 0; s < VIOLIN_STRINGS.length; s++) {
+                const fret0_coords = state.noteCoordinates[s]?.[0];
+                if (fret0_coords) {
+                    const lineY = fret0_coords.y;
+                    const hLine = document.createElement('div');
+                    hLine.className = 'calibration-line horizontal';
+                    hLine.style.top = `${lineY}px`;
+                    container.appendChild(hLine);
+                }
+            }
+
+            // Dibuja líneas verticales hasta MAX_FRETS
+            for (let fret = 0; fret <= MAX_FRETS; fret++) {
+                // Solo si el traste es 0 o está en la lista de trastes seleccionados para calibración
+                if (fret === 0 || state.selectedCalibrationFrets.has(fret)) {
+                    // Usamos la cuerda más grave (G) como referencia para la posición X de las líneas verticales
+                    const refCoords = state.noteCoordinates[0]?.[fret]; 
+                    if (refCoords) {
+                        const vLine = document.createElement('div');
+                        vLine.className = 'calibration-line vertical';
+                        vLine.style.left = `${refCoords.x}px`;
+                        container.appendChild(vLine);
+                    }
+                }
+            }
+        } else {
+             // Si NO estamos en modo calibración de notas, remover la clase para ocultar las líneas
+            container.classList.remove('calibration-mode-active');
+        }
+      }
+
+      // --- Funciones de Actualización de UI ---
+      function updateStateFromControls() {
+        // console.log("updateStateFromControls ejecutado."); // Debugging
+        state.scaleType = document.getElementById('scale-select').value;
+        state.rootNote = document.getElementById('root-note-select').value;
+        state.showOutscaleNotes = document.getElementById('show-outscale-notes').checked;
+        state.showRootOnly = document.getElementById('show-root-only').checked;
+        state.showGuidelines = showTemplateCheckbox.checked;
+        state.selectedPosition = positionSelect.value;
+        state.showPositionMarker = showPositionMarkerCheckbox.checked;
+
+        const selectedNoteDisplay = document.querySelector('input[name="noteDisplay"]:checked');
+        if (selectedNoteDisplay) {
+            state.noteDisplayMode = selectedNoteDisplay.value;
+        }
+
+        const selectedOutOfPositionDisplay = document.querySelector('input[name="outOfPositionDisplay"]:checked');
+        if (selectedOutOfPositionDisplay) {
+            state.outOfPositionDisplayMode = selectedOutOfPositionDisplay.value;
+        }
+
+        // Guardar las selecciones de trastes de calibración cada vez que cambian
+        localStorage.setItem('selectedCalibrationFrets', JSON.stringify(Array.from(state.selectedCalibrationFrets)));
+
+        updateScaleNotesDisplay();
+        updateColorControls();
+        calculateIntermediateFretPositions(); // Recalcular las notas intermedias en cada cambio de control relevante
+        drawFretboard();
+      }
+
+      async function saveAsPNG() {
+          const wasCalibrationMode = state.calibrationMode;
+          const wasBracketCalibrationMode = state.bracketCalibrationMode; // Guardar estado del modo de corchetes
+          const wasGuidelinesVisible = state.showGuidelines;
+          const wasPositionMarkerVisible = state.showPositionMarker;
+
+          // Desactivar modos de calibración y guías para el PNG
+          state.calibrationMode = false;
+          state.bracketCalibrationMode = false;
+          state.showGuidelines = false;
+          state.showPositionMarker = false;
+
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = IMAGE_WIDTH;
+          tempCanvas.height = IMAGE_HEIGHT;
+          const tempCtx = tempCanvas.getContext('2d');
+
+          // 1. Dibujar la imagen de fondo
+          if (state.backgroundImg) {
+              tempCtx.drawImage(state.backgroundImg, 0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
+          }
+
+          // 2. Dibujar las líneas guía si estaban activas
+          if (wasGuidelinesVisible && state.guidelinesImg) {
+              tempCtx.globalAlpha = state.guidelinesOpacity;
+              tempCtx.drawImage(state.guidelinesImg, 0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
+              tempCtx.globalAlpha = 1.0;
+          }
+
+          // 3. Dibujar el marcador de posición si estaba activo
+          if (wasPositionMarkerVisible && state.selectedPosition !== 'all') {
+              const positionCoords = state.bracketCoordinates[state.selectedPosition];
+              if (positionCoords) {
+                  // Aplicar el filtro de brillo al contexto del canvas para el PNG
+                  tempCtx.filter = 'brightness(1.5)';
+                  tempCtx.strokeStyle = '#2ecc71'; // Color verde para PNG
+                  tempCtx.lineWidth = 2; // Grosor de la línea
+                  tempCtx.lineCap = 'round';
+
+                  // Línea horizontal superior
+                  tempCtx.beginPath();
+                  tempCtx.moveTo(positionCoords.horizontalLeft.x, positionCoords.horizontalLeft.y);
+                  tempCtx.lineTo(positionCoords.horizontalRight.x, positionCoords.horizontalRight.y);
+                  tempCtx.stroke();
+
+                  // Línea vertical izquierda
+                  tempCtx.beginPath();
+                  tempCtx.moveTo(positionCoords.horizontalLeft.x, positionCoords.horizontalLeft.y);
+                  tempCtx.lineTo(positionCoords.verticalLeftBottom.x, positionCoords.verticalLeftBottom.y);
+                  tempCtx.stroke();
+
+                  // Línea vertical derecha
+                  tempCtx.beginPath();
+                  tempCtx.moveTo(positionCoords.horizontalRight.x, positionCoords.horizontalRight.y);
+                  tempCtx.lineTo(positionCoords.verticalRightBottom.x, positionCoords.verticalRightBottom.y);
+                  tempCtx.stroke();
+
+                  // Línea horizontal inferior (NUEVO)
+                  tempCtx.beginPath();
+                  tempCtx.moveTo(positionCoords.verticalLeftBottom.x, positionCoords.verticalLeftBottom.y);
+                  tempCtx.lineTo(positionCoords.verticalRightBottom.x, positionCoords.verticalRightBottom.y);
+                  tempCtx.stroke();
+
+                  tempCtx.fillStyle = '#2ecc71'; // Color del texto del marcador también en verde para PNG
+                  tempCtx.font = 'bold 16px Arial';
+                  tempCtx.textAlign = 'center';
+                  tempCtx.textBaseline = 'bottom';
+                  tempCtx.shadowColor = 'rgba(46, 204, 113, 0.5)'; // Sombra para el texto
+                  tempCtx.shadowBlur = 8;
+                  const midXText = (positionCoords.horizontalLeft.x + positionCoords.horizontalRight.x) / 2;
+                  const midYText = (positionCoords.horizontalLeft.y + positionCoords.horizontalRight.y) / 2;
+                  tempCtx.fillText(`${state.selectedPosition}ª Posición`, midXText, midYText - 5);
+
+                  // Restablecer la sombra y el filtro del canvas
+                  tempCtx.shadowColor = 'transparent';
+                  tempCtx.shadowBlur = 0;
+                  tempCtx.filter = 'none';
+              }
+          }
+
+          // 4. Dibujar las notas
+          const stringsOrdered = [...VIOLIN_STRINGS].reverse();
+          
+          stringsOrdered.forEach((stringName, i) => {
+              const stringIndexInViolinStrings = (VIOLIN_STRINGS.length - 1 - i);
+              const openNoteIndexInChromatic = getChromaticIndex(stringName);
+              const rootIndexInChromatic = getChromaticIndex(state.rootNote);
+              const scaleIntervals = SCALES[state.scaleType];
+
+              for (let fret = 0; fret <= MAX_FRETS; fret++) {
+                  const currentNoteChromaticIndex = (openNoteIndexInChromatic + fret) % 12;
+                  let semitoneFromRoot = (currentNoteChromaticIndex - rootIndexInChromatic + 12) % 12;
+                  const inScale = scaleIntervals.includes(semitoneFromRoot);
+                  const showNoteBasedOnFilter = (inScale || state.showOutscaleNotes) && (!state.showRootOnly || semitoneFromRoot === 0);
+
+                  const coords = state.noteCoordinates[stringIndexInViolinStrings]?.[fret];
+                  if (!coords) continue;
+
+                  const isInSelectedPositionRange = isNoteInSelectedFretRange(fret);
+
+                  // Aplicar lógica de "No mostrar" para notas fuera de posición
+                  if (!isInSelectedPositionRange && state.outOfPositionDisplayMode === 'hide' && state.selectedPosition !== 'all') {
+                      continue;
+                  }
+                  // Si la primera posición no está seleccionada, no dibujar la cuerda al aire
+                  if (fret === 0 && state.selectedPosition !== '1' && state.selectedPosition !== 'all') {
+                      continue;
+                  }
+                  
+                  if (!showNoteBasedOnFilter) continue; // Si no pasa los filtros generales, no dibujar
+
+                  let noteRadius;
+                  let fontSize;
+                  if (fret >= 22) { noteRadius = 12; fontSize = 12; }
+                  else if (fret >= 20) { noteRadius = 13; fontSize = 13; }
+                  else { noteRadius = 14; fontSize = 14; }
+
+                  let displayText = '';
+                  if (state.showRootOnly && semitoneFromRoot === 0) {
+                      displayText = getNoteNameForDisplay(currentNoteChromaticIndex, rootIndexInChromatic, state.noteDisplayMode);
+                  } else {
+                      displayText = getNoteNameForDisplay(currentNoteChromaticIndex, rootIndexInChromatic, state.noteDisplayMode);
+                  }
+
+                  let noteColor = '#bbb';
+                  if (inScale) {
+                      const degreeIndex = scaleIntervals.indexOf(semitoneFromRoot);
+                      noteColor = state.colorsByDegree[degreeIndex] || '#3498db';
+                  }
+
+                  let pngNoteOpacity = 1.0;
+                  if (state.selectedPosition !== 'all') {
+                      if (!isInSelectedPositionRange && state.outOfPositionDisplayMode === 'transparent') {
+                          pngNoteOpacity = 0.25;
+                      } else if (!isInSelectedPositionRange && state.outOfPositionDisplayMode === 'full-opacity') {
+                          pngNoteOpacity = 1.0;
+                      } else if (isInSelectedPositionRange) {
+                          pngNoteOpacity = 1.0;
+                      }
+                  }
+                  
+                  tempCtx.globalAlpha = pngNoteOpacity;
+
+                  tempCtx.beginPath();
+                  tempCtx.arc(coords.x, coords.y, noteRadius, 0, Math.PI * 2);
+                  tempCtx.fillStyle = noteColor;
+                  tempCtx.fill();
+
+                  if (displayText) {
+                      tempCtx.fillStyle = '#fff';
+                      tempCtx.font = `${fontSize}px Arial`;
+                      tempCtx.textAlign = 'center';
+                      tempCtx.textBaseline = 'middle';
+                      tempCtx.fillText(displayText, coords.x, coords.y);
+                  }
+                  tempCtx.globalAlpha = 1.0;
+              }
+          });
+
+
+          const link = document.createElement('a');
+          const scaleName = document.getElementById('scale-select').options[document.getElementById('scale-select').selectedIndex].text;
+          const rootNote = document.getElementById('root-note-select').value;
+          link.download = `diapason_violin_${rootNote}_${scaleName}.png`;
+          link.href = tempCanvas.toDataURL('image/png');
+          link.click();
+
+          // Restaurar estados originales
+          state.showGuidelines = wasGuidelinesVisible;
+          state.showPositionMarker = wasPositionMarkerVisible;
+          state.calibrationMode = wasCalibrationMode;
+          state.bracketCalibrationMode = wasBracketCalibrationMode;
+          drawFretboard();
+      }
+
+
+      // --- Funcionalidad de Calibración ---
+      function toggleCalibrationMode() {
+          if (state.bracketCalibrationMode) { // Si el modo de corchetes está activo, desactivarlo primero
+              state.bracketCalibrationMode = false;
+              bracketCalibrationModeToggle.classList.remove('active');
+              bracketCalibrationModeToggle.textContent = 'Activar Calibración de Corchetes';
+          }
+
+          state.calibrationMode = !state.calibrationMode;
+          calibrationModeToggle.classList.toggle('active', state.calibrationMode);
+          calibrationModeToggle.textContent = state.calibrationMode ? 'Desactivar Calibración de Notas' : 'Activar Calibración de Notas';
+          
+          calibrationSettingsSection.style.display = 'block';
+          drawFretboard(); // Redibuja para mostrar/ocultar los puntos y líneas correctas
+          updateCalibrationOutput();
+          updateBracketCalibrationOutput(); // Asegura que la salida de corchetes se actualice
+      }
+
+      // NUEVO: Función para activar/desactivar el modo de calibración de corchetes
+      function toggleBracketCalibrationMode() {
+          if (state.calibrationMode) { // Si el modo de notas está activo, desactivarlo primero
+              state.calibrationMode = false;
+              calibrationModeToggle.classList.remove('active');
+              calibrationModeToggle.textContent = 'Activar Calibración de Notas';
+          }
+
+          state.bracketCalibrationMode = !state.bracketCalibrationMode;
+          bracketCalibrationModeToggle.classList.toggle('active', state.bracketCalibrationMode);
+          bracketCalibrationModeToggle.textContent = state.bracketCalibrationMode ? 'Desactivar Calibración de Corchetes' : 'Activar Calibración de Corchetes';
+
+          calibrationSettingsSection.style.display = 'block'; 
+          drawFretboard(); // Redibuja para mostrar/ocultar los puntos y líneas correctas
+          updateBracketCalibrationOutput();
+          updateCalibrationOutput(); // Asegura que la salida de notas se actualice
+      }
+
+      function updateCalibrationOutput() {
+          if (state.calibrationMode) {
+              let output = "const DEFAULT_CALIBRATION_POINTS = {\n";
+              
+              // Asegurarse de que el orden de las cuerdas en el output refleje el String Index para mayor claridad
+              // (G=0, D=1, A=2, E=3)
+              for (let sIdx = 0; sIdx < VIOLIN_STRINGS.length; sIdx++) {
+                  const currentStringName = VIOLIN_STRINGS[sIdx]; // Obtener el nombre de la cuerda por su índice
+                  output += `  // Cuerda ${currentStringName} - String Index ${sIdx}\n`;
+                  output += `  ${sIdx}: {\n`;
+
+                  // Recolectar solo los trastes de calibración *seleccionados* y el traste 0 para la exportación
+                  const fretsToExport = Array.from(state.selectedCalibrationFrets).concat([0]).sort((a,b) => a - b);
+                  
+                  fretsToExport.forEach(fret => {
+                      if (state.noteCoordinates[sIdx] && state.noteCoordinates[sIdx][fret]) {
+                          const coords = state.noteCoordinates[sIdx][fret];
+                          output += `    ${fret}: { x: ${Math.round(coords.x)}, y: ${Math.round(coords.y)} },\n`;
+                      }
+                  });
+                  output += `  },\n`;
+              }
+              output += "};";
+              calibrationOutput.textContent = output;
+          } else {
+              calibrationOutput.textContent = "Activa el Modo Calibración de Notas para ver las coordenadas.";
+          }
+      }
+
+      // NUEVO: Función para actualizar la salida de coordenadas de los corchetes
+      function updateBracketCalibrationOutput() {
+        if (state.bracketCalibrationMode) {
+            let output = "const DEFAULT_BRACKET_COORDS = {\n";
+            for (const positionId in state.bracketCoordinates) {
+                if (state.bracketCoordinates.hasOwnProperty(positionId)) {
+                    // Solo exportar la posición activa si no es 'all'
+                    // No hay 'all' para bracket coords, siempre se exportan las de la posición seleccionada
+                    // En este caso, siempre se exportarán todas las posiciones que tengan datos.
+                    output += `  '${positionId}': {\n`;
+                    const coords = state.bracketCoordinates[positionId];
+                    // Ordenar las claves para una salida consistente
+                    const orderedKeys = ['horizontalLeft', 'horizontalRight', 'verticalLeftBottom', 'verticalRightBottom', 'horizontalBottom'];
+                    orderedKeys.forEach(key => {
+                        if (coords.hasOwnProperty(key)) {
+                            output += `    ${key}: { x: ${Math.round(coords[key].x)}, y: ${Math.round(coords[key].y)} },\n`;
+                        }
+                        // Si falta 'horizontalBottom', añadirla con un valor por defecto para el export
+                        if (key === 'horizontalBottom' && !coords.hasOwnProperty(key)) {
+                            // Calcula una 'y' inicial basada en las verticales existentes si es posible
+                            const defaultY = (coords.verticalLeftBottom?.y + coords.verticalRightBottom?.y) / 2 || 0;
+                            output += `    ${key}: { x: ${Math.round(coords.verticalLeftBottom?.x || 0)}, y: ${Math.round(defaultY)} },\n`;
+                        }
+                    });
+                    output += `  },\n`;
+                }
+            }
+            output += "};";
+            bracketCalibrationOutput.textContent = output;
+        } else {
+            bracketCalibrationOutput.textContent = "Activa el Modo Calibración de Corchetes para ver las coordenadas.";
+        }
+      }
+
+      // NUEVO: Función para generar los checkboxes de selección de trastes
+      function generateCalibrationFretsCheckboxes() {
+          calibrationPointsSelection.innerHTML = ''; // Limpiar el contenido anterior
+          
+          // Traste 0 (Nut)
+          let label = document.createElement('label');
+          let checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.value = 0;
+          checkbox.checked = state.selectedCalibrationFrets.has(0);
+          checkbox.dataset.fret = 0;
+          label.appendChild(checkbox);
+          label.appendChild(document.createTextNode('Nut (0)')); // Más conciso
+          calibrationPointsSelection.appendChild(label);
+          
+          for (let i = 1; i <= MAX_FRETS; i++) {
+              label = document.createElement('label');
+              checkbox = document.createElement('input');
+              checkbox.type = 'checkbox';
+              checkbox.value = i;
+              checkbox.checked = state.selectedCalibrationFrets.has(i);
+              checkbox.dataset.fret = i;
+              label.appendChild(checkbox);
+              label.appendChild(document.createTextNode(`${i}`)); // Solo el número del traste
+              calibrationPointsSelection.appendChild(label);
+          }
+
+          calibrationPointsSelection.addEventListener('change', (e) => {
+              if (e.target.type === 'checkbox' && e.target.closest('#calibration-points-selection')) {
+                  const fret = parseInt(e.target.value);
+                  if (e.target.checked) {
+                      state.selectedCalibrationFrets.add(fret);
+                  } else {
+                      state.selectedCalibrationFrets.delete(fret);
+                  }
+                  localStorage.setItem('selectedCalibrationFrets', JSON.stringify(Array.from(state.selectedCalibrationFrets))); // Guardar cambios
+                  calculateIntermediateFretPositions(); // Recalcular al cambiar selección
+                  drawFretboard(); // Redibujar para actualizar los puntos arrastrables
+              }
+          });
+      }
+
+
+      // --- Funcionalidad de Arrastre de Notas y Corchetes ---
+      function handleMouseDown(e) {
+          if (!state.calibrationMode && !state.bracketCalibrationMode) return;
+
+          let target = e.target.closest('.open-note.draggable');
+          if (target && state.calibrationMode) {
+              e.preventDefault();
+              draggingElement = target;
+              draggingType = 'note';
+              draggingElement.classList.add('dragging');
+
+              // Obtener la posición del clic relativa al elemento
+              const elementRect = draggingElement.getBoundingClientRect();
+              mouseOffsetX = e.clientX - elementRect.left;
+              mouseOffsetY = e.clientY - elementRect.top;
+
+              document.addEventListener('mousemove', handleMouseMove);
+              document.addEventListener('mouseup', handleMouseUp);
+              return;
+          }
+
+          target = e.target.closest('.bracket-control-point');
+          if (target && state.bracketCalibrationMode) {
+              e.preventDefault();
+              draggingElement = target;
+              draggingType = 'bracket';
+              draggingElement.classList.add('dragging');
+
+              // Obtener la posición del clic relativa al elemento
+              const elementRect = draggingElement.getBoundingClientRect();
+              mouseOffsetX = e.clientX - elementRect.left;
+              mouseOffsetY = e.clientY - elementRect.top;
+              
+              document.addEventListener('mousemove', handleMouseMove);
+              document.addEventListener('mouseup', handleMouseUp);
+              return;
+          }
+      }
+
+      function handleMouseMove(e) {
+          if (!draggingElement) return;
+          e.preventDefault();
+
+          const containerRect = container.getBoundingClientRect();
+          // Calcular las nuevas coordenadas centradas en el elemento arrastrado
+          // Ahora, el cálculo usa el offset para que el elemento se mueva desde el punto exacto del clic
+          let newX = (e.clientX - containerRect.left) - mouseOffsetX + (draggingElement.offsetWidth / 2);
+          let newY = (e.clientY - containerRect.top) - mouseOffsetY + (draggingElement.offsetHeight / 2);
+
+          // Restringir las coordenadas para que no se salgan de los límites del contenedor
+          const elementHalfWidth = draggingElement.offsetWidth / 2;
+          const elementHalfHeight = draggingElement.offsetHeight / 2;
+
+          newX = Math.max(elementHalfWidth, Math.min(newX, container.offsetWidth - elementHalfWidth));
+          newY = Math.max(elementHalfHeight, Math.min(newY, container.offsetHeight - elementHalfHeight));
+
+          if (draggingType === 'note') {
+              const stringIndex = parseInt(draggingElement.dataset.stringIndex);
+              const fretNumber = parseInt(draggingElement.dataset.fretNumber);
+
+              // Actualizar directamente la coordenada del punto arrastrado
+              state.noteCoordinates[stringIndex][fretNumber] = { x: newX, y: newY };
+              calculateIntermediateFretPositions(); // Recalcular notas intermedias para actualización visual
+              updateCalibrationOutput();
+
+          } else if (draggingType === 'bracket') {
+              const positionId = draggingElement.dataset.positionId;
+              const pointKey = draggingElement.dataset.pointKey;
+              
+              const currentCoords = state.bracketCoordinates[positionId];
+
+              // Aplicar lógica de movimiento según el punto de control
+              // Guardar las nuevas coordenadas del punto arrastrado
+              if (pointKey === 'horizontalLeft' || pointKey === 'horizontalRight' || pointKey === 'horizontalBottom') {
+                  currentCoords[pointKey] = { x: newX, y: newY };
+              } else if (pointKey === 'verticalLeftBottom' || pointKey === 'verticalRightBottom') {
+                  currentCoords[pointKey] = { x: newX, y: newY };
+              }
+
+              // Sincronizar los puntos interconectados para mantener la forma del rectángulo
+              if (pointKey === 'horizontalLeft') {
+                  currentCoords.verticalLeftBottom.x = newX;
+                  currentCoords.horizontalBottom.x = newX; // horizontalBottom sigue a horizontalLeft en X
+              } else if (pointKey === 'horizontalRight') {
+                  currentCoords.verticalRightBottom.x = newX;
+                  currentCoords.horizontalBottom.x = currentCoords.verticalRightBottom.x; // horizontalBottom sigue a horizontalRight en X
+              } else if (pointKey === 'verticalLeftBottom') {
+                  currentCoords.horizontalBottom.y = newY; // horizontalBottom sigue a verticalLeftBottom en Y
+              } else if (pointKey === 'verticalRightBottom') {
+                  currentCoords.horizontalBottom.y = newY; // horizontalBottom sigue a verticalRightBottom en Y
+              } else if (pointKey === 'horizontalBottom') {
+                  currentCoords.verticalLeftBottom.y = newY;
+                  currentCoords.verticalRightBottom.y = newY;
+                  // Si se mueve horizontalBottom, y no verticalLeftBottom ni verticalRightBottom están en el mismo punto,
+                  // queremos que horizontalBottom.x se mantenga entre verticalLeftBottom.x y verticalRightBottom.x
+                  // pero no forzarlo a ser igual a uno de ellos en particular, a menos que el usuario lo arrastre allí.
+                  // Para la funcionalidad del rectángulo, horizontalBottom.x debe seguir a verticalLeftBottom.x (punto de inicio)
+                  currentCoords.horizontalBottom.x = currentCoords.verticalLeftBottom.x;
+              }
+
+
+              updateBracketCalibrationOutput();
+          }
+          // Actualizar la posición del elemento arrastrado visualmente
+          draggingElement.style.left = `${newX - (draggingElement.offsetWidth / 2)}px`;
+          draggingElement.style.top = `${newY - (draggingElement.offsetHeight / 2)}px`;
+          
+          drawFretboard(); // Redibuja para actualizar las líneas y el texto
+      }
+
+      function handleMouseUp() {
+          if (draggingElement) {
+              draggingElement.classList.remove('dragging');
+              if (draggingType === 'note') {
+                  saveCalibrationPoints();
+              } else if (draggingType === 'bracket') {
+                  saveBracketCoordinates();
+              }
+              draggingElement = null;
+              draggingType = null;
+              document.removeEventListener('mousemove', handleMouseMove);
+              document.removeEventListener('mouseup', handleMouseUp);
+          }
+      }
+
+      // --- Inicialización y Event Listeners ---
+      document.addEventListener('DOMContentLoaded', async () => {
+        canvas.style.display = 'block';
+
+        try {
+            state.backgroundImg = await loadImage(BACKGROUND_IMAGE_NAME);
+            state.guidelinesImg = await loadImage(GUIDELINES_IMAGE_NAME);
+        } catch (error) {
+            console.error(error.message);
+            alert(`Error al cargar imágenes: ${error.message}. Asegúrate de que los archivos "${BACKGROUND_IMAGE_NAME}" y "${GUIDELINES_IMAGE_NAME}" estén en la misma carpeta que este HTML.`);
+            return; // Detener la ejecución si las imágenes no cargan
+        }
+
+        canvas.width = IMAGE_WIDTH;
+        canvas.height = IMAGE_HEIGHT;
+        container.style.width = `${IMAGE_WIDTH}px`;
+        container.style.height = `${IMAGE_HEIGHT}px`;
+
+        loadCalibrationPoints();
+        loadBracketCoordinates();
+        initDefaultColors();
+        
+        const savedShowGuidelines = localStorage.getItem('showGuidelines');
+        if (savedShowGuidelines !== null) {
+            state.showGuidelines = JSON.parse(savedShowGuidelines);
+        }
+        showTemplateCheckbox.checked = state.showGuidelines;
+
+        const defaultNoteDisplayRadio = document.querySelector(`input[name="noteDisplay"][value="${state.noteDisplayMode}"]`);
+        if (defaultNoteDisplayRadio) {
+            defaultNoteDisplayRadio.checked = true;
+        }
+
+        const defaultOutOfPositionDisplayRadio = document.querySelector(`input[name="outOfPositionDisplay"]:checked`);
+        if (defaultOutOfPositionDisplayRadio) {
+            defaultOutOfPositionDisplayRadio.checked = true;
+        }
+
+        // Cargar los trastes de calibración seleccionados del localStorage
+        const savedSelectedFrets = localStorage.getItem('selectedCalibrationFrets');
+        if (savedSelectedFrets) {
+            try {
+                state.selectedCalibrationFrets = new Set(JSON.parse(savedSelectedFrets));
+            } catch (e) {
+                console.error("Error al cargar trastes de calibración seleccionados, usando valores por defecto:", e);
+                state.selectedCalibrationFrets = new Set(CALIBRATION_FRETS_DEFAULT);
+            }
+        } else {
+            state.selectedCalibrationFrets = new Set(CALIBRATION_FRETS_DEFAULT);
+        }
+        generateCalibrationFretsCheckboxes();
+
+
+        // Establecer la primera posición como seleccionada por defecto
+        positionSelect.value = state.selectedPosition;
+        showPositionMarkerCheckbox.checked = state.showPositionMarker;
+
+        // Llamar a updateStateFromControls una vez al inicio
+        updateStateFromControls();
+
+        // Event Listeners para controles generales
+        document.getElementById('root-note-select').addEventListener('change', updateStateFromControls);
+        document.getElementById('scale-select').addEventListener('change', updateStateFromControls);
+        document.getElementById('show-outscale-notes').addEventListener('change', updateStateFromControls);
+        document.getElementById('show-root-only').addEventListener('change', updateStateFromControls);
+        noteDisplayOptions.addEventListener('change', updateStateFromControls);
+
+        positionSelect.addEventListener('change', updateStateFromControls);
+        showPositionMarkerCheckbox.addEventListener('change', updateStateFromControls);
+        outOfPositionNotesDisplay.addEventListener('change', updateStateFromControls); 
+
+
+        // El listener para el botón de restablecer colores se añade aquí
+        resetColorsBtn.addEventListener('click', () => {
+            initDefaultColors();
+            drawFretboard();
+        });
+        document.getElementById('save-png-btn').addEventListener('click', saveAsPNG);
+
+        calibrationModeToggle.addEventListener('click', toggleCalibrationMode);
+        bracketCalibrationModeToggle.addEventListener('click', toggleBracketCalibrationMode); // NUEVO listener
+        
+        exportCoordsBtn.addEventListener('click', saveCalibrationPoints);
+        resetCoordsBtn.addEventListener('click', resetCalibrationPoints);
+        resetBracketCoordsBtn.addEventListener('click', resetBracketCoordinates);
+
+        showTemplateCheckbox.addEventListener('change', () => {
+            localStorage.setItem('showGuidelines', showTemplateCheckbox.checked); // Guardar preferencia
+            updateStateFromControls();
+        });
+
+        container.addEventListener('mousedown', handleMouseDown);
+      });
+    })();
+  </script>
+</body>
+</html>
